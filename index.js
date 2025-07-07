@@ -24,13 +24,21 @@ app.use(session({
   saveUninitialized: true
 }));
 
-// ENV credentials
+// === فحص المتغيرات ===
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
 
-console.log('✅ CLIENT_ID:', CLIENT_ID);
-console.log('✅ REDIRECT_URI:', REDIRECT_URI);
+console.log('-------------------------------------');
+console.log('✅ فحص متغيرات البيئة');
+console.log('CLIENT_ID:', CLIENT_ID || '❌ مفقود');
+console.log('CLIENT_SECRET:', CLIENT_SECRET || '❌ مفقود');
+console.log('REDIRECT_URI:', REDIRECT_URI || '❌ مفقود');
+console.log('-------------------------------------');
+
+if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI) {
+  console.error('❌ خطأ: في متغيرات مفقودة في .env أو في إعدادات Render!');
+}
 
 // OAuth2 client
 const oauth2Client = new google.auth.OAuth2(
