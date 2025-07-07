@@ -3,6 +3,7 @@ const session = require('express-session');
 const MemoryStore = require('memorystore')(session);
 const { google } = require('googleapis');
 const path = require('path');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,12 +27,12 @@ app.use(session({
 }));
 
 // Load credentials.json content (put your credentials.json file in the project root)
-const CREDENTIALS = require('./credentials.json');
 
 const SCOPES = ['https://www.googleapis.com/auth/blogger'];
-const CLIENT_ID = CREDENTIALS.web.client_id;
-const CLIENT_SECRET = CREDENTIALS.web.client_secret;
-const REDIRECT_URI = CREDENTIALS.web.redirect_uris[0];
+require('dotenv').config();
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const REDIRECT_URI = process.env.REDIRECT_URI;
 
 // OAuth2 client
 const oauth2Client = new google.auth.OAuth2(
