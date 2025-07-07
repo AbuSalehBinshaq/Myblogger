@@ -1,48 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Draft Posts | Blogger Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>المسودات</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <header>
     <div class="container header-flex">
-      <h1>Draft Posts</h1>
-      <select id="filter-select">
-        <option value="all">All</option>
-        <option value="recent">Recent</option>
-        <option value="old">Old</option>
-      </select>
-      <a href="/blogs" class="btn back">← Back to Blogs</a>
-      <a href="/logout" class="btn logout">Logout</a>
+      <h1>المسودات</h1>
+      <a href="/blogs" class="btn">← الرجوع للمدونات</a>
+      <a href="/logout" class="btn logout">تسجيل الخروج</a>
     </div>
   </header>
 
   <main class="container">
-    <% if(posts.length === 0) { %>
-      <p>No draft posts available.</p>
+    <% if (posts.length === 0) { %>
+      <p>لا توجد مسودات حالياً.</p>
     <% } else { %>
       <ul class="posts-list">
         <% posts.forEach(post => { %>
-          <li class="post-card" 
-              data-post-id="<%= post.id %>" 
-              data-post-content="<%- post.content.replace(/\n/g, '') %>"
-              data-blog-id="<%= blogId %>">
+          <li class="post-card">
             <% if (post.firstImage) { %>
-              <img src="<%= post.firstImage %>" alt="Post image" />
+              <img src="<%= post.firstImage %>" alt="صورة المقال" />
             <% } else { %>
-              <div class="no-image">No Image</div>
+              <div class="no-image">لا توجد صورة</div>
             <% } %>
+
             <div class="post-content">
               <h2><%= post.title %></h2>
               <div class="actions">
-                <a class="btn publish" href="/publish/<%= blogId %>/<%= post.id %>">✅ Publish</a>
-                <small style="display:block; font-size: 12px; color: #555; margin-top: 4px;">
-                  سيتم نشر تغريدة تلقائيًا مع العنوان والرابط
-                </small>
-                <a class="btn delete" href="/delete/<%= blogId %>/<%= post.id %>">❌ Delete</a>
+                <a href="/publish/<%= blogId %>/<%= post.id %>" class="btn publish">✅ نشر</a>
+                <a href="/delete/<%= blogId %>/<%= post.id %>" class="btn delete">❌ حذف</a>
               </div>
             </div>
           </li>
@@ -50,45 +40,5 @@
       </ul>
     <% } %>
   </main>
-
-  <script>
-    document.querySelectorAll('.post-card').forEach(card => {
-      const postId = card.dataset.postId;
-      const blogId = card.dataset.blogId;
-      const fullContent = card.dataset.postContent;
-      const originalTitle = card.querySelector('h2').outerHTML;
-
-      const originalActionsHTML = `
-        <div class="actions">
-          <a class="btn publish" href="/publish/${blogId}/${postId}">✅ Publish</a>
-          <small style="display:block; font-size: 12px; color: #555; margin-top: 4px;">
-            سيتم نشر تغريدة تلقائيًا مع العنوان والرابط
-          </small>
-          <a class="btn delete" href="/delete/${blogId}/${postId}">❌ Delete</a>
-        </div>
-      `;
-
-      function expandContent() {
-        const container = card.querySelector('.post-content');
-        container.innerHTML = `
-          <div class="post-full-content">${fullContent}</div>
-          ${originalActionsHTML}
-        `;
-      }
-
-      function collapseContent() {
-        const container = card.querySelector('.post-content');
-        container.innerHTML = `
-          ${originalTitle}
-          ${originalActionsHTML}
-        `;
-      }
-
-      card.addEventListener('mouseenter', expandContent);
-      card.addEventListener('mouseleave', collapseContent);
-      card.addEventListener('touchstart', expandContent);
-      card.addEventListener('touchend', collapseContent);
-    });
-  </script>
 </body>
 </html>
