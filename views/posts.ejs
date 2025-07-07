@@ -19,6 +19,7 @@
       <a href="/logout" class="btn logout">Logout</a>
     </div>
   </header>
+
   <main class="container">
     <% if(posts.length === 0) { %>
       <p>No draft posts available.</p>
@@ -43,44 +44,30 @@
       </ul>
     <% } %>
   </main>
+
   <script>
-    document.getElementById('filter-select').addEventListener('change', function() {
-      const filterValue = this.value;
-      const postCards = document.querySelectorAll('.post-card');
-      postCards.forEach(card => {
-        const postDate = card.getAttribute('data-date'); // Assume data-date is set in the card
-        if (filterValue === 'all' || (filterValue === 'recent' && postDate > someDate) || (filterValue === 'old' && postDate <= someDate)) {
-          card.style.display = '';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    });
-
-    // Show full post content on touch or hover
     document.querySelectorAll('.post-card').forEach(card => {
-      card.addEventListener('touchstart', function(event) {
-        event.preventDefault();
-        this.classList.add('show-content');
-        this.querySelector('.post-content').innerHTML = this.getAttribute('data-post-content') + '<div class="actions">' + this.querySelector('.actions').innerHTML + '</div>';
-      });
+      const originalTitle = card.querySelector('h2').outerHTML;
+      const originalActions = card.querySelector('.actions').outerHTML;
+      const fullContent = card.getAttribute('data-post-content');
 
-      card.addEventListener('touchend', function(event) {
-        this.classList.remove('show-content');
-        this.querySelector('.post-content').innerHTML = this.querySelector('h2').textContent + '<div class="actions">' + this.querySelector('.actions').innerHTML + '</div>';
-      });
+      function expandContent() {
+        const container = card.querySelector('.post-content');
+        container.innerHTML = `
+          <div class="post-full-content">${fullContent}</div>
+          ${originalActions}
+        `;
+      }
 
-      card.addEventListener('mouseenter', function(event) {
-        if (!this.classList.contains('show-content')) {
-          this.classList.add('show-content');
-          this.querySelector('.post-content').innerHTML = this.getAttribute('data-post-content') + '<div class="actions">' + this.querySelector('.actions').innerHTML + '</div>';
-        }
-      });
+      function collapseContent() {
+        const container = card.querySelector('.post-content');
+        container.innerHTML = `${originalTitle}${originalActions}`;
+      }
 
-      card.addEventListener('mouseleave', function(event) {
-        this.classList.remove('show-content');
-        this.querySelector('.post-content').innerHTML = this.querySelector('h2').textContent + '<div class="actions">' + this.querySelector('.actions').innerHTML + '</div>';
-      });
+      card.addEventListener('mouseenter', expandContent);
+      card.addEventListener('mouseleave', collapseContent);
+      card.addEventListener('touchstart', expandContent);
+      card.addEventListener('touchend', collapseContent);
     });
   </script>
 </body>
