@@ -26,7 +26,10 @@
     <% } else { %>
       <ul class="posts-list">
         <% posts.forEach(post => { %>
-          <li class="post-card" data-post-id="<%= post.id %>" data-post-content="<%= post.content %>">
+          <li class="post-card" 
+              data-post-id="<%= post.id %>" 
+              data-post-content="<%- post.content.replace(/\n/g, '') %>"
+              data-blog-id="<%= blogId %>">
             <% if (post.firstImage) { %>
               <img src="<%= post.firstImage %>" alt="Post image" />
             <% } else { %>
@@ -50,21 +53,35 @@
 
   <script>
     document.querySelectorAll('.post-card').forEach(card => {
+      const postId = card.dataset.postId;
+      const blogId = card.dataset.blogId;
+      const fullContent = card.dataset.postContent;
       const originalTitle = card.querySelector('h2').outerHTML;
-      const originalActions = card.querySelector('.actions').outerHTML;
-      const fullContent = card.getAttribute('data-post-content');
+
+      const originalActionsHTML = `
+        <div class="actions">
+          <a class="btn publish" href="/publish/${blogId}/${postId}">✅ Publish</a>
+          <small style="display:block; font-size: 12px; color: #555; margin-top: 4px;">
+            سيتم نشر تغريدة تلقائيًا مع العنوان والرابط
+          </small>
+          <a class="btn delete" href="/delete/${blogId}/${postId}">❌ Delete</a>
+        </div>
+      `;
 
       function expandContent() {
         const container = card.querySelector('.post-content');
         container.innerHTML = `
           <div class="post-full-content">${fullContent}</div>
-          ${originalActions}
+          ${originalActionsHTML}
         `;
       }
 
       function collapseContent() {
         const container = card.querySelector('.post-content');
-        container.innerHTML = `${originalTitle}${originalActions}`;
+        container.innerHTML = `
+          ${originalTitle}
+          ${originalActionsHTML}
+        `;
       }
 
       card.addEventListener('mouseenter', expandContent);
