@@ -25,33 +25,16 @@ app.use(session({
   saveUninitialized: true
 }));
 
-// === متغيرات البيئة ===
+// بيئة Google و Twitter
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
 
-const TWITTER_APP_KEY = process.env.TWITTER_APP_KEY;
-const TWITTER_APP_SECRET = process.env.TWITTER_APP_SECRET;
+const TWITTER_APP_KEY = process.env.TWITTER_API_KEY;
+const TWITTER_APP_SECRET = process.env.TWITTER_API_SECRET;
 const TWITTER_ACCESS_TOKEN = process.env.TWITTER_ACCESS_TOKEN;
 const TWITTER_ACCESS_SECRET = process.env.TWITTER_ACCESS_SECRET;
 
-console.log('-------------------------------------');
-console.log('✅ فحص متغيرات البيئة');
-console.log('CLIENT_ID:', CLIENT_ID || '❌ مفقود');
-console.log('CLIENT_SECRET:', CLIENT_SECRET || '❌ مفقود');
-console.log('REDIRECT_URI:', REDIRECT_URI || '❌ مفقود');
-console.log('TWITTER_APP_KEY:', TWITTER_APP_KEY || '❌ مفقود');
-console.log('TWITTER_APP_SECRET:', TWITTER_APP_SECRET || '❌ مفقود');
-console.log('-------------------------------------');
-
-if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI) {
-  console.error('❌ متغيرات Google ناقصة');
-}
-if (!TWITTER_APP_KEY || !TWITTER_APP_SECRET || !TWITTER_ACCESS_TOKEN || !TWITTER_ACCESS_SECRET) {
-  console.error('❌ متغيرات Twitter ناقصة');
-}
-
-// إعداد Google
 const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 const SCOPES = ['https://www.googleapis.com/auth/blogger'];
 
@@ -67,11 +50,10 @@ function getBloggerService() {
 }
 
 function extractFirstImage(html) {
-  const imgMatch = html.match(/<img[^>]+src="([^">]+)"/i);
-  return imgMatch ? imgMatch[1] : null;
+  const match = html.match(/<img[^>]+src="([^">]+)"/i);
+  return match ? match[1] : null;
 }
 
-// إعداد Twitter
 const twitterClient = new TwitterApi({
   appKey: TWITTER_APP_KEY,
   appSecret: TWITTER_APP_SECRET,
@@ -79,7 +61,7 @@ const twitterClient = new TwitterApi({
   accessSecret: TWITTER_ACCESS_SECRET,
 });
 
-// ===== Routes =====
+// === Routes ===
 
 app.get('/', (req, res) => {
   if (!req.session.credentials) return res.render('login');
@@ -87,12 +69,12 @@ app.get('/', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-  const authUrl = oauth2Client.generateAuthUrl({
+  const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPES,
-    prompt: 'consent'
+    prompt: 'consent',
   });
-  res.redirect(authUrl);
+  res.redirect(url);
 });
 
 app.get('/callback', async (req, res) => {
@@ -103,9 +85,9 @@ app.get('/callback', async (req, res) => {
     oauth2Client.setCredentials(tokens);
     req.session.credentials = tokens;
     res.redirect('/blogs');
-  } catch (error) {
-    console.error('[OAuth Error]', error);
-    res.send('Authentication failed.');
+  } catch (err) {
+    console.error('[OAuth Error]', err);
+    res.send('فشل تسجيل الدخول.');
   }
 });
 
@@ -118,11 +100,10 @@ app.get('/blogs', async (req, res) => {
   try {
     const blogger = getBloggerService();
     const response = await blogger.blogs.listByUser({ userId: 'self' });
-    const blogs = response.data.items || [];
-    res.render('blogs', { blogs });
-  } catch (error) {
-    console.error('[Error fetching blogs]', error);
-    res.send('Error fetching blogs.');
+    res.render('blogs', { blogs: response.data.items || [] });
+  } catch (err) {
+    console.error('[Error fetching blogs]', err);
+    res.send('تعذر جلب المدونات.');
   }
 });
 
@@ -131,17 +112,24 @@ app.get('/posts/:blogId', async (req, res) => {
   const blogId = req.params.blogId;
   try {
     const blogger = getBloggerService();
-    const response = await blogger.posts.list({ blogId, status: 'draft' });
+    const response = await blogger.posts.list({
+      blogId,
+      status: 'draft',
+      fetchBodies: true,
+      maxResults: 50
+    });
+
     const posts = (response.data.items || []).map(post => ({
       id: post.id,
       title: post.title,
       content: post.content,
       firstImage: extractFirstImage(post.content)
     }));
+
     res.render('posts', { posts, blogId });
-  } catch (error) {
-    console.error('[Error fetching posts]', error);
-    res.send('Error fetching posts.');
+  } catch (err) {
+    console.error('[Error fetching posts]', err);
+    res.send('تعذر جلب التدوينات.');
   }
 });
 
@@ -151,46 +139,46 @@ app.get('/publish/:blogId/:postId', async (req, res) => {
 
   try {
     const blogger = getBloggerService();
-
-    // الحصول على تفاصيل المقال
-    const postResponse = await blogger.posts.get({ blogId, postId });
-    const post = postResponse.data;
-    const title = post.title;
-    const image = extractFirstImage(post.content);
-    const url = post.url;
+    const postRes = await blogger.posts.get({ blogId, postId });
+    const post = postRes.data;
 
     // نشر المقال
     await blogger.posts.publish({ blogId, postId });
 
-    // نشر التغريدة
-    let tweetText = `${title}\n${url}`;
-    if (image) {
-      const mediaId = await twitterClient.v1.uploadMedia(image, { mimeType: 'image/jpeg' });
-      await twitterClient.v2.tweet({
-        text: tweetText,
-        media: { media_ids: [mediaId] }
-      });
-    } else {
-      await twitterClient.v2.tweet(tweetText);
+    const title = post.title;
+    const url = post.url;
+    const image = extractFirstImage(post.content);
+    const tweetText = `${title}\n${url}`;
+
+    try {
+      if (image) {
+        const mediaId = await twitterClient.v1.uploadMedia(image, { mimeType: 'image/jpeg' });
+        await twitterClient.v2.tweet({ text: tweetText, media: { media_ids: [mediaId] } });
+      } else {
+        await twitterClient.v2.tweet(tweetText);
+      }
+    } catch (err) {
+      console.error('[Twitter Error]', err);
     }
 
     res.redirect(`/posts/${blogId}`);
-  } catch (error) {
-    console.error('[Error publishing post or tweeting]', error);
-    res.send('خطأ في نشر المقال أو التغريدة.');
+  } catch (err) {
+    console.error('[Publish Error]', err);
+    res.send('تعذر نشر المقال.');
   }
 });
 
 app.get('/delete/:blogId/:postId', async (req, res) => {
   if (!setCredentialsFromSession(req)) return res.redirect('/');
   const { blogId, postId } = req.params;
+
   try {
     const blogger = getBloggerService();
     await blogger.posts.delete({ blogId, postId });
     res.redirect(`/posts/${blogId}`);
-  } catch (error) {
-    console.error('[Error deleting post]', error);
-    res.send('Error deleting post.');
+  } catch (err) {
+    console.error('[Delete Error]', err);
+    res.send('تعذر حذف المقال.');
   }
 });
 
