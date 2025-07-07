@@ -143,8 +143,13 @@ app.get('/publish/:blogId/:postId', async (req, res) => {
     const post = postRes.data;
 
     // نشر المقال
-    await blogger.posts.publish({ blogId, postId });
-
+    try {
+  await blogger.posts.publish({ blogId, postId });
+  console.log('✅ تم نشر المقال بنجاح');
+} catch (err) {
+  console.error('❌ فشل نشر المقال في بلوجر:', err.message);
+  return res.send('❌ خطأ من Google: ' + err.message);
+}
     const title = post.title;
     const url = post.url;
     const image = extractFirstImage(post.content);
