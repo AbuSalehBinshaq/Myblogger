@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Draft Posts | Blogger Manager</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <div class="container header-flex">
+      <h1>Draft Posts</h1>
+      <select id="filter-select">
+        <option value="all">All</option>
+        <option value="recent">Recent</option>
+        <option value="old">Old</option>
+      </select>
+      <a href="/blogs" class="btn back">← Back to Blogs</a>
+      <a href="/logout" class="btn logout">Logout</a>
+    </div>
+  </header>
+  <main class="container">
+    <% if(posts.length === 0) { %>
+      <p>No draft posts available.</p>
+    <% } else { %>
+      <ul class="posts-list">
+        <% posts.forEach(post => { %>
+          <li class="post-card" data-post-id="<%= post.id %>" data-post-content="<%= post.content %>">
+            <% if (post.firstImage) { %>
+              <img src="<%= post.firstImage %>" alt="Post image" />
+            <% } else { %>
+              <div class="no-image">No Image</div>
+            <% } %>
+            <div class="post-content">
+              <h2><%= post.title %></h2>
+              <div class="actions">
+                <a class="btn publish" href="/publish/<%= blogId %>/<%= post.id %>">✅ Publish</a>
+                <a class="btn delete" href="/delete/<%= blogId %>/<%= post.id %>">❌ Delete</a>
+              </div>
+            </div>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </main>
+  <script>
+    document.getElementById('filter-select').addEventListener('change', function() {
+      const filterValue = this.value;
+      const postCards = document.querySelectorAll('.post-card');
+      postCards.forEach(card => {
+        const postDate = card.getAttribute('data-date'); // Assume data-date is set in the card
+        if (filterValue === 'all' || (filterValue === 'recent' && postDate > someDate) || (filterValue === 'old' && postDate <= someDate)) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+
+    // Show full post content on touch or hover
+    document.querySelectorAll('.post-card').forEach(card => {
+      card.addEventListener('touchstart', function(event) {
+        event.preventDefault();
+        this.classList.add('show-content');
+        this.querySelector('.post-content').innerHTML = this.getAttribute('data-post-content') + '<div class="actions">' + this.querySelector('.actions').innerHTML + '</div>';
+      });
+
+      card.addEventListener('touchend', function(event) {
+        this.classList.remove('show-content');
+        this.querySelector('.post-content').innerHTML = this.querySelector('h2').textContent + '<div class="actions">' + this.querySelector('.actions').innerHTML + '</div>';
+      });
+
+      card.addEventListener('mouseenter', function(event) {
+        if (!this.classList.contains('show-content')) {
+          this.classList.add('show-content');
+          this.querySelector('.post-content').innerHTML = this.getAttribute('data-post-content') + '<div class="actions">' + this.querySelector('.actions').innerHTML + '</div>';
+        }
+      });
+
+      card.addEventListener('mouseleave', function(event) {
+        this.classList.remove('show-content');
+        this.querySelector('.post-content').innerHTML = this.querySelector('h2').textContent + '<div class="actions">' + this.querySelector('.actions').innerHTML + '</div>';
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Profile</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <div class="container header-flex">
+      <h1>👤 My Profile</h1>
+      <a href="/blogs" class="btn back">← Back to Blogs</a>
+      <a href="/logout" class="btn logout">Logout</a>
+    </div>
+  </header>
+  <main class="container">
+    <div class="profile-info">
+      <img src="<%= user.picture %>" width="100" style="border-radius: 50%;" />
+      <p><strong>Name:</strong> <%= user.name %></p>
+      <p><strong>Email:</strong> <%= user.email %></p>
+    </div>
+  </main>
+</body>
+</html>
