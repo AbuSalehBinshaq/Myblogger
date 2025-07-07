@@ -8,31 +8,29 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Static files (CSS)
+// Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// View engine setup (EJS)
+// View engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Session setup - keep login for 7 days
+// Sessions
 app.use(session({
-  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }, // 7 days
-  store: new MemoryStore({
-    checkPeriod: 86400000 // prune expired entries every 24h
-  }),
+  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 },
+  store: new MemoryStore({ checkPeriod: 86400000 }),
   secret: 'supersecretkey',
   resave: false,
   saveUninitialized: true
 }));
 
-// Load credentials.json content (put your credentials.json file in the project root)
-
-const SCOPES = ['https://www.googleapis.com/auth/blogger'];
-require('dotenv').config();
+// ENV credentials
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
+
+console.log('✅ CLIENT_ID:', CLIENT_ID);
+console.log('✅ REDIRECT_URI:', REDIRECT_URI);
 
 // OAuth2 client
 const oauth2Client = new google.auth.OAuth2(
@@ -41,7 +39,9 @@ const oauth2Client = new google.auth.OAuth2(
   REDIRECT_URI
 );
 
-// Helper: convert session credentials to OAuth2 client
+const SCOPES = ['https://www.googleapis.com/auth/blogger'];
+
+// Helpers
 function setCredentialsFromSession(req) {
   const creds = req.session.credentials;
   if (!creds) return false;
@@ -49,174 +49,114 @@ function setCredentialsFromSession(req) {
   return true;
 }
 
-// Helper: build Blogger service with auth
 function getBloggerService() {
   return google.blogger({ version: 'v3', auth: oauth2Client });
 }
 
-// Helper: Extract first image from post content (simple regex)
 function extractFirstImage(html) {
   const imgMatch = html.match(/<img[^>]+src="([^">]+)"/i);
   return imgMatch ? imgMatch[1] : null;
 }
 
-// Helper: Rebuild URL with port if missing
-function urlWithPort(req, path) {
-  const host = req.hostname;
-  const port = PORT;
-  return `http://${host}:${port}${path}`;
-}
-
 // ===== Routes =====
 
-// Home / Index
 app.get('/', (req, res) => {
-  if (!req.session.credentials) {
-    console.log('[GET /] No credentials, rendering login page');
-    return res.render('login');
-  }
-  console.log('[GET /] Logged in, redirecting to /blogs');
+  if (!req.session.credentials) return res.render('login');
   res.redirect('/blogs');
 });
 
-// Login route - redirect to Google OAuth consent screen
 app.get('/login', (req, res) => {
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPES,
     prompt: 'consent'
   });
-  console.log('[GET /login] Redirecting to Google OAuth consent');
+  console.log('[GET /login] Redirecting to:', authUrl);
   res.redirect(authUrl);
 });
 
-// OAuth2 callback route
 app.get('/callback', async (req, res) => {
   const code = req.query.code;
-  if (!code) {
-    console.log('[GET /callback] No code query param');
-    return res.redirect('/');
-  }
+  if (!code) return res.redirect('/');
 
   try {
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
     req.session.credentials = tokens;
-    console.log('[GET /callback] OAuth2 login successful, tokens saved in session');
     res.redirect('/blogs');
   } catch (error) {
-    console.error('[GET /callback] Error retrieving tokens:', error);
-    res.send('Authentication failed. Please try again.');
+    console.error('[OAuth Error]', error);
+    res.send('Authentication failed.');
   }
 });
 
-// Logout route - destroy session
 app.get('/logout', (req, res) => {
-  req.session.destroy(() => {
-    console.log('[GET /logout] Session destroyed, user logged out');
-    res.redirect('/');
-  });
+  req.session.destroy(() => res.redirect('/'));
 });
 
-// List blogs
 app.get('/blogs', async (req, res) => {
-  if (!setCredentialsFromSession(req)) {
-    console.log('[GET /blogs] No credentials in session, redirecting to /');
-    return res.redirect('/');
-  }
+  if (!setCredentialsFromSession(req)) return res.redirect('/');
 
   try {
     const blogger = getBloggerService();
     const response = await blogger.blogs.listByUser({ userId: 'self' });
     const blogs = response.data.items || [];
-    console.log(`[GET /blogs] Fetched ${blogs.length} blogs`);
     res.render('blogs', { blogs });
   } catch (error) {
-    console.error('[GET /blogs] Error fetching blogs:', error);
-    res.send('Error fetching blogs. Please try again later.');
+    console.error('[Error fetching blogs]', error);
+    res.send('Error fetching blogs.');
   }
 });
 
-// List draft posts of a blog
 app.get('/posts/:blogId', async (req, res) => {
-  if (!setCredentialsFromSession(req)) {
-    console.log('[GET /posts/:blogId] No credentials in session, redirecting to /');
-    return res.redirect('/');
-  }
+  if (!setCredentialsFromSession(req)) return res.redirect('/');
 
   const blogId = req.params.blogId;
-
   try {
     const blogger = getBloggerService();
-    const response = await blogger.posts.list({
-      blogId,
-      status: 'draft'
-    });
-    const postsRaw = response.data.items || [];
-
-    // Add firstImage property for each post
-    const posts = postsRaw.map(post => ({
+    const response = await blogger.posts.list({ blogId, status: 'draft' });
+    const posts = (response.data.items || []).map(post => ({
       id: post.id,
       title: post.title,
       content: post.content,
       firstImage: extractFirstImage(post.content)
     }));
-
-    console.log(`[GET /posts/${blogId}] Fetched ${posts.length} draft posts`);
     res.render('posts', { posts, blogId });
   } catch (error) {
-    console.error(`[GET /posts/${blogId}] Error fetching posts:`, error);
-    res.send('Error fetching posts. Please try again later.');
+    console.error('[Error fetching posts]', error);
+    res.send('Error fetching posts.');
   }
 });
 
-// Publish post
 app.get('/publish/:blogId/:postId', async (req, res) => {
-  if (!setCredentialsFromSession(req)) {
-    console.log('[GET /publish/:blogId/:postId] No credentials in session, redirecting to /');
-    return res.redirect('/');
-  }
-
+  if (!setCredentialsFromSession(req)) return res.redirect('/');
   const { blogId, postId } = req.params;
 
   try {
     const blogger = getBloggerService();
-    await blogger.posts.publish({
-      blogId,
-      postId
-    });
-    console.log(`[GET /publish/${blogId}/${postId}] Post published`);
+    await blogger.posts.publish({ blogId, postId });
     res.redirect(`/posts/${blogId}`);
   } catch (error) {
-    console.error(`[GET /publish/${blogId}/${postId}] Error publishing post:`, error);
-    res.send('Error publishing post. Please try again later.');
+    console.error('[Error publishing post]', error);
+    res.send('Error publishing post.');
   }
 });
 
-// Delete post
 app.get('/delete/:blogId/:postId', async (req, res) => {
-  if (!setCredentialsFromSession(req)) {
-    console.log('[GET /delete/:blogId/:postId] No credentials in session, redirecting to /');
-    return res.redirect('/');
-  }
-
+  if (!setCredentialsFromSession(req)) return res.redirect('/');
   const { blogId, postId } = req.params;
 
   try {
     const blogger = getBloggerService();
-    await blogger.posts.delete({
-      blogId,
-      postId
-    });
-    console.log(`[GET /delete/${blogId}/${postId}] Post deleted`);
+    await blogger.posts.delete({ blogId, postId });
     res.redirect(`/posts/${blogId}`);
   } catch (error) {
-    console.error(`[GET /delete/${blogId}/${postId}] Error deleting post:`, error);
-    res.send('Error deleting post. Please try again later.');
+    console.error('[Error deleting post]', error);
+    res.send('Error deleting post.');
   }
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server started on http://localhost:${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
