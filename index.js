@@ -1,10 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const MemoryStore = require('memorystore')(session);
 const { google } = require('googleapis');
 const { TwitterApi } = require('twitter-api-v2');
 const path = require('path');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,7 +25,7 @@ app.use(session({
   saveUninitialized: true
 }));
 
-// بيئة Google و Twitter
+// Google & Twitter setup
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
@@ -142,28 +142,46 @@ app.get('/publish/:blogId/:postId', async (req, res) => {
     const postRes = await blogger.posts.get({ blogId, postId });
     const post = postRes.data;
 
-    // نشر المقال
+    // 1. نشر المقال في بلوجر
     try {
-  await blogger.posts.publish({ blogId, postId });
-  console.log('✅ تم نشر المقال بنجاح');
-} catch (err) {
-  console.error('❌ فشل نشر المقال في بلوجر:', err.message);
-  return res.send('❌ خطأ من Google: ' + err.message);
-}
+      await blogger.posts.publish({ blogId, postId });
+      console.log('✅ تم نشر المقال بنجاح');
+    } catch (err) {
+      console.error('❌ فشل نشر المقال في بلوجر:', err.message);
+      return res.send('❌ خطأ من Google: ' + err.message);
+    }
+
+    // 2. إعداد محتوى التغريدة
     const title = post.title;
     const url = post.url;
     const image = extractFirstImage(post.content);
     const tweetText = `${title}\n${url}`;
 
+    // 3. نشر التغريدة في تويتر
     try {
+      console.log('✍️ محاولة إرسال التغريدة...');
+
       if (image) {
         const mediaId = await twitterClient.v1.uploadMedia(image, { mimeType: 'image/jpeg' });
-        await twitterClient.v2.tweet({ text: tweetText, media: { media_ids: [mediaId] } });
+        await twitterClient.v2.tweet({
+          text: tweetText,
+          media: { media_ids: [mediaId] }
+        });
       } else {
         await twitterClient.v2.tweet(tweetText);
       }
+
+      console.log('✅ تم إرسال التغريدة بنجاح!');
     } catch (err) {
-      console.error('[Twitter Error]', err);
+      const errorText = err?.data?.detail || err?.message || '';
+      const isDuplicate = errorText.includes('duplicate content');
+
+      if (isDuplicate) {
+        console.warn('⚠️ التغريدة مكررة. تم تجاوزها بدون إرسال.');
+      } else {
+        console.error('❌ خطأ غير متوقع أثناء التغريد:');
+        console.error(err?.data || err);
+      }
     }
 
     res.redirect(`/posts/${blogId}`);
