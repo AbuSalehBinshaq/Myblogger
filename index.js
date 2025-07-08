@@ -9,14 +9,11 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// View engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Sessions
 app.use(session({
   cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 },
   store: new MemoryStore({ checkPeriod: 86400000 }),
@@ -25,7 +22,6 @@ app.use(session({
   saveUninitialized: true
 }));
 
-// Google & Twitter setup
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI;
@@ -139,60 +135,52 @@ app.get('/publish/:blogId/:postId', async (req, res) => {
 
   try {
     const blogger = getBloggerService();
-    console.log(`📥 جلب المقال: blogId=${blogId}, postId=${postId}`);
+    console.log(`📥 جلب المسودة: blogId=${blogId}, postId=${postId}`);
 
-    const postRes = await blogger.posts.get({ blogId, postId });
-    const post = postRes.data;
-    console.log('✅ تم جلب المسودة:', post.title);
+    const getRes = await blogger.posts.get({ blogId, postId });
+    const post = getRes.data;
 
-    // 1. نشر المقال في بلوجر
+    console.log(`✅ تم جلب المسودة: ${post.title}`);
+
+    const updateRes = await blogger.posts.update({
+      blogId,
+      postId,
+      requestBody: {
+        ...post,
+        status: "live"
+      }
+    });
+
+    const published = updateRes.data;
+    console.log('✅ تم تحويل المسودة إلى منشور:', published.url);
+
+    const title = published.title || "بدون عنوان";
+    const url = published.url;
+    const image = extractFirstImage(published.content);
+    const tweetText = `${title}\n${url}`;
+
     try {
-      console.log('🚀 محاولة نشر المقال في بلوجر...');
-      await blogger.posts.publish({ blogId, postId });
-      console.log('✅ تم نشر المقال في بلوجر');
-    } catch (err) {
-      console.error('❌ فشل نشر المقال في بلوجر:', err.response?.data || err.message || err);
-      return res.redirect(`/posts/${blogId}?error=1`);
-    }
-
-    // 2. إعداد التغريدة
-    const title = post.title || 'بدون عنوان';
-    const url = post.url;
-    if (!url) {
-      console.warn('⚠️ post.url غير متوفر بعد النشر. سيتم استخدام رابط بديل');
-    }
-
-    const image = extractFirstImage(post.content);
-    const tweetText = `${title}\n${url || 'الرابط غير متاح حالياً'}`;
-
-    // 3. إرسال التغريدة
-    try {
-      console.log('✍️ محاولة إرسال التغريدة...');
+      console.log('✍️ نشر التغريدة...');
       if (image) {
-        console.log('📷 رفع صورة من:', image);
         const mediaId = await twitterClient.v1.uploadMedia(image, { mimeType: 'image/jpeg' });
-        await twitterClient.v2.tweet({
-          text: tweetText,
-          media: { media_ids: [mediaId] }
-        });
-        console.log('✅ تم إرسال التغريدة بصورة');
+        await twitterClient.v2.tweet({ text: tweetText, media: { media_ids: [mediaId] } });
+        console.log('✅ تم نشر التغريدة مع صورة');
       } else {
         await twitterClient.v2.tweet(tweetText);
-        console.log('✅ تم إرسال التغريدة بدون صورة');
+        console.log('✅ تم نشر التغريدة بدون صورة');
       }
     } catch (err) {
-      const errorText = err?.data?.detail || err?.message || '';
-      const isDuplicate = errorText.includes('duplicate content');
+      const isDuplicate = err?.data?.detail?.includes('duplicate');
       if (isDuplicate) {
-        console.warn('⚠️ التغريدة مكررة. تم تجاوزها بدون إرسال.');
+        console.warn('⚠️ التغريدة مكررة. لم تُرسل.');
       } else {
-        console.error('❌ خطأ أثناء محاولة التغريد:', err.response?.data || err.message || err);
+        console.error('❌ فشل في نشر التغريدة:', err.response?.data || err.message);
       }
     }
 
     res.redirect(`/posts/${blogId}`);
   } catch (err) {
-    console.error('[Publish Error - خارج try]:', err.response?.data || err.message || err);
+    console.error('[Publish Error]', err);
     res.redirect(`/posts/${blogId}?error=1`);
   }
 });
