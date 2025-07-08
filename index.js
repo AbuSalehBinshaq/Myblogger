@@ -133,14 +133,12 @@ app.get('/publish/:blogId/:postId', async (req, res) => {
   if (!setCredentialsFromSession(req)) return res.redirect('/');
   const { blogId, postId } = req.params;
 
+  console.log(`🚀 محاولة نشر: blogId=${blogId}, postId=${postId}`);
+
   try {
     const blogger = getBloggerService();
-    console.log(`📥 جلب المسودة: blogId=${blogId}, postId=${postId}`);
-
     const getRes = await blogger.posts.get({ blogId, postId });
     const post = getRes.data;
-
-    console.log(`✅ تم جلب المسودة: ${post.title}`);
 
     const updateRes = await blogger.posts.update({
       blogId,
@@ -180,7 +178,7 @@ app.get('/publish/:blogId/:postId', async (req, res) => {
 
     res.redirect(`/posts/${blogId}`);
   } catch (err) {
-    console.error('[Publish Error]', err);
+    console.error('[Publish Error]', err.response?.data || err.message);
     res.redirect(`/posts/${blogId}?error=1`);
   }
 });
