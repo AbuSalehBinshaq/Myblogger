@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>المسودات</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="main-header">
+    <h1>المسودات في <%= blogName %></h1>
+  </header>
+
+  <main class="container">
+    <% if (message) { %>
+      <div class="alert"><%= message %></div>
+    <% } %>
+
+    <% if (drafts.length === 0) { %>
+      <div class="card">
+        <p>لا توجد مسودات حاليًا.</p>
+      </div>
+    <% } else { %>
+      <div class="drafts-grid">
+        <% drafts.forEach(function(draft) { %>
+          <div class="draft-card">
+            <% if (draft.image) { %>
+              <img src="<%= draft.image %>" alt="صورة" class="draft-img">
+            <% } %>
+            <h2><%= draft.title %></h2>
+            <p><%= draft.contentSnippet %>...</p>
+
+            <form method="POST" action="/publish/<%= blogId %>/<%= draft.id %>?tweet=true">
+              <button type="submit" class="btn publish">نشر</button>
+            </form>
+
+            <form method="POST" action="/publish/<%= blogId %>/<%= draft.id %>?tweet=false">
+              <button type="submit" class="btn publish">نشر بدون تويتر</button>
+            </form>
+
+            <a href="https://www.blogger.com/blog/posts/<%= blogId %>/<%= draft.id %>" target="_blank" class="btn edit">تعديل</a>
+
+            <form method="POST" action="/delete/<%= blogId %>/<%= draft.id %>">
+              <button type="submit" class="btn delete">حذف</button>
+            </form>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </main>
+</body>
+</html>

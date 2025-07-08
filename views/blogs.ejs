@@ -1,45 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Your Blogs | Blogger Manager</title>
-  <link rel="stylesheet" href="/style.css" />
+  <meta charset="UTF-8">
+  <title>اختر مدونة</title>
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header>
-    <div class="container header-flex">
-      <h1>Your Blogs</h1>
-      <input type="text" id="search-input" placeholder="Search blogs..." />
-      <a href="/logout" class="btn logout">Logout</a>
-    </div>
+
+  <header class="main-header">
+    <h1>اختر مدونة</h1>
   </header>
+
   <main class="container">
-    <% if(blogs.length === 0) { %>
-      <p class="no-results">No blogs found. You can start by creating a new blog.</p>
-    <% } else { %>
-      <ul class="list">
-        <% blogs.forEach(blog => { %>
-          <li class="list-item">
-            <a href="/posts/<%= blog.id %>"><%= blog.name %></a>
+    <div class="card">
+      <ul class="blog-list">
+        <% blogs.forEach(function(blog) { %>
+          <li class="blog-item">
+            <a href="/blogs/<%= blog.id %>/drafts" class="btn blog-btn">
+              <%= blog.name %>
+            </a>
           </li>
-        <% }) %>
+        <% }); %>
       </ul>
-    <% } %>
+    </div>
   </main>
-  <script>
-    document.getElementById('search-input').addEventListener('input', function() {
-      const searchValue = this.value.toLowerCase();
-      const listItems = document.querySelectorAll('.list-item');
-      listItems.forEach(item => {
-        const blogName = item.textContent.toLowerCase();
-        if (blogName.includes(searchValue)) {
-          item.style.display = '';
-        } else {
-          item.style.display = 'none';
-        }
-      });
-    });
-  </script>
+
 </body>
 </html>
