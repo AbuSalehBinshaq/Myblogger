@@ -1,205 +1,209 @@
-/* Base styles */
-* {
-  box-sizing: border-box;
-}
-
+/* 🌙 الوضع العام */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f9fafb;
+  font-family: 'Tahoma', sans-serif;
+  background: linear-gradient(to right, #e3f2fd, #e1f5fe);
+  color: #0d47a1;
   margin: 0;
   padding: 0;
-  color: #333;
+  direction: rtl;
 }
 
+/* 💡 روابط */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* 🔲 الحاويات */
 .container {
-  max-width: 900px;
-  margin: 20px auto;
-  background: #fff;
-  padding: 25px 30px;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 30px;
 }
 
-/* Center utility */
-.center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 90vh;
-}
-
-/* Headers */
-h1 {
-  font-weight: 700;
-  font-size: 2.3rem;
-  margin-bottom: 20px;
-  color: #111827;
-}
-
-/* Lists */
-ul.list {
-  list-style: none;
-  padding: 0;
-}
-
-.list-item {
-  padding: 15px 10px;
-  font-size: 1.2rem;
-  border-bottom: 1px solid #e5e7eb;
-  transition: background-color 0.3s ease;
-}
-
-.list-item a {
-  text-decoration: none;
-  color: #2563eb;
-  font-weight: 600;
-}
-
-.list-item:hover {
-  background-color: #f3f4f6;
-}
-
-/* Post cards */
-.posts-list {
-  list-style: none;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill,minmax(280px,1fr));
-  gap: 20px;
-}
-
-.post-card {
-  background-color: #fff;
-  border-radius: 14px;
-  box-shadow: 0 6px 15px rgba(0,0,0,0.07);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.post-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 25px rgba(0,0,0,0.12);
-}
-
-.post-card img {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.no-image {
-  height: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #e0e7ff;
-  color: #4f46e5;
-  font-weight: 600;
-  font-size: 1.2rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.post-content {
-  padding: 15px 20px;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.post-content h2 {
-  font-size: 1.3rem;
-  margin: 0 0 10px 0;
-  color: #1e293b;
-}
-
-.actions {
-  margin-top: auto;
-  display: flex;
-  gap: 12px;
-}
-
-.btn {
-  flex: 1;
+/* 🔰 الهيدر */
+.main-header {
+  background: linear-gradient(to left, #1565c0, #0d47a1);
+  color: white;
+  padding: 35px 20px;
   text-align: center;
-  padding: 10px 15px;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: background-color 0.3s ease;
-  user-select: none;
-  cursor: pointer;
-  color: #fff;
+  font-size: 26px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 }
 
+/* ⚠️ الرسائل */
+.alert {
+  background-color: #e3fcec;
+  color: #01579b;
+  border: 1px solid #81d4fa;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  margin-top: 25px;
+}
+
+/* 📚 قائمة المدونات */
+.blog-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.blog-item .btn {
+  background: linear-gradient(to left, #42a5f5, #1e88e5);
+  color: white;
+  padding: 18px 28px;
+  border-radius: 12px;
+  font-size: 18px;
+  transition: 0.3s;
+  min-width: 240px;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+}
+
+.blog-item .btn:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(to left, #1e88e5, #1565c0);
+}
+
+/* 📝 بطاقات المسودات */
+.drafts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.draft-card {
+  background: white;
+  border-radius: 14px;
+  padding: 25px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  transition: 0.3s;
+}
+
+.draft-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.15);
+}
+
+.draft-img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-bottom: 18px;
+}
+
+/* ✍️ عنوان ووصف */
+.draft-card h2 {
+  font-size: 22px;
+  margin-bottom: 12px;
+  color: #0d47a1;
+}
+
+.draft-card p {
+  font-size: 17px;
+  color: #1565c0;
+  margin-bottom: 20px;
+}
+
+/* 🎛️ أزرار التحكم */
+.btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  font-weight: bold;
+  transition: all 0.25s ease;
+}
+
+/* ✅ نشر */
 .btn.publish {
-  background-color: #22c55e;
+  background: linear-gradient(to right, #43a047, #2e7d32);
+  color: white;
 }
 
 .btn.publish:hover {
-  background-color: #16a34a;
+  background: linear-gradient(to right, #2e7d32, #1b5e20);
 }
 
+/* ✏️ تعديل */
+.btn.edit {
+  background: linear-gradient(to right, #fbc02d, #f9a825);
+  color: #212121;
+}
+
+.btn.edit:hover {
+  background: linear-gradient(to right, #f9a825, #f57f17);
+}
+
+/* 🗑️ حذف */
 .btn.delete {
-  background-color: #ef4444;
+  background: linear-gradient(to right, #e53935, #c62828);
+  color: white;
 }
 
 .btn.delete:hover {
-  background-color: #b91c1c;
+  background: linear-gradient(to right, #c62828, #b71c1c);
 }
 
-/* Header bar */
-header {
-  background: #2563eb;
+/* 📱 استجابة الموبايل */
+@media (max-width: 600px) {
+  .main-header {
+    font-size: 22px;
+    padding: 25px;
+  }
+
+  .btn {
+    font-size: 16px;
+    padding: 14px;
+  }
+
+  .blog-item .btn {
+    font-size: 17px;
+    padding: 16px;
+    min-width: unset;
+  }
+
+  .container {
+    padding: 20px;
+    margin: 15px;
+  }
+
+  .draft-card h2 {
+    font-size: 20px;
+  }
+
+  .draft-card p {
+    font-size: 16px;
+  }
+}
+
+/* 🌐 زر تسجيل الدخول */
+.btn.login-btn {
+  background: linear-gradient(to right, #4285F4, #357AE8);
   color: white;
-  padding: 12px 0;
-  margin-bottom: 20px;
+  padding: 18px 28px;
+  font-size: 18px;
   border-radius: 12px;
+  font-weight: bold;
+  text-align: center;
+  display: inline-block;
+  margin-top: 30px;
+  box-shadow: 0 6px 16px rgba(66, 133, 244, 0.25);
+  transition: all 0.3s ease;
 }
 
-.header-flex {
-  max-width: 900px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 30px;
-}
-
-.btn.logout {
-  background: #f87171;
-  padding: 8px 14px;
-  font-size: 0.9rem;
-}
-
-.btn.logout:hover {
-  background: #dc2626;
-}
-
-.btn.back {
-  background: #3b82f6;
-  padding: 8px 14px;
-  font-size: 0.9rem;
-  margin-right: 10px;
-}
-
-.btn.back:hover {
-  background: #2563eb;
-}
-
-/* Responsive */
-@media (max-width: 700px) {
-  .header-flex {
-    flex-direction: column;
-    gap: 10px;
-    padding: 0 15px;
-  }
-
-  .posts-list {
-    grid-template-columns: 1fr;
-  }
+.btn.login-btn:hover {
+  background: linear-gradient(to right, #357AE8, #2a65c3);
+  transform: translateY(-2px);
 }
