@@ -37,7 +37,7 @@
               <button type="submit" class="btn publish">نشر بدون تويتر</button>
             </form>
 
-            <a href="https://www.blogger.com/blog/posts/<%= blogId %>/<%= draft.id %>" target="_blank" class="btn edit">تعديل</a>
+            <a href="https://www.blogger.com/blog/posts/edit/<%= blogId %>/<%= draft.id %>" target="_blank" class="btn edit">تعديل</a>
 
             <form method="POST" action="/delete/<%= blogId %>/<%= draft.id %>">
               <button type="submit" class="btn delete">حذف</button>
